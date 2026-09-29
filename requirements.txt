@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+python-dotenv
+ollama
+pydantic
+mcp
+langgraph
+langchain
+langchain-community
+langchain-chroma
+langchain-huggingface
+sentence-transformers
+pytest
+pytest-asyncio
+httpx
