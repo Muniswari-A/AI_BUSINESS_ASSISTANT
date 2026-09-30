@@ -13,3 +13,4 @@ sentence-transformers
 pytest
 pytest-asyncio
 httpx
+langchain-ollama==1.1.0

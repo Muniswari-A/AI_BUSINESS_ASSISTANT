@@ -46,10 +46,10 @@ Return ONLY valid JSON. Do not include markdown code blocks.
 """
     try:
         result = ollama.chat(
-            model=OLLAMA_MODEL,
-            messages=[{"role": "user", "content": prompt}],
-            format="json"
-        )
+    model=OLLAMA_MODEL,
+    messages=[{"role": "user", "content": prompt}],
+    format="json"
+)
         data = json.loads(result["message"]["content"])
         requirements = data.get("requirements", [])
         customer_name = data.get("customer_name", "")
@@ -153,7 +153,8 @@ Return ONLY the exact action name (CREATE_TICKET, MORE_INFORMATION_REQUIRED, or 
 """
     try:
         result = ollama.chat(
-            model=OLLAMA_MODEL,
+           model=OLLAMA_MODEL,
+
             messages=[{"role": "user", "content": prompt}]
         )
         decision_raw = result["message"]["content"].strip()
@@ -265,6 +266,7 @@ If information is missing, state it clearly. Do not invent information.
     try:
         result = ollama.chat(
             model=OLLAMA_MODEL,
+
             messages=[{"role": "user", "content": prompt}]
         )
         response = result["message"]["content"]

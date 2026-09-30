@@ -1,11 +1,14 @@
 from langchain_ollama import ChatOllama
 from langchain_core.messages import HumanMessage, ToolMessage
 
-from backend.config import OLLAMA_MODEL
+from backend.config import OLLAMA_MODEL, OLLAMA_BASE_URL
 from agents.tools import search_customer
 
 # 1. Create the ChatOllama model
-llm = ChatOllama(model=OLLAMA_MODEL)
+llm = ChatOllama(
+    model=OLLAMA_MODEL,
+    base_url=OLLAMA_BASE_URL
+)
 
 # 2. Bind the search_customer tool to the model
 llm_with_tools = llm.bind_tools([search_customer])

@@ -2,10 +2,10 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server import MCPServer
 from mcp_server.db import get_connection
 # Initialize the MCP server
-mcp = FastMCP("DCI Business MCP Server")
+mcp = MCPServer("DCI Business MCP Server")
 
 @mcp.tool()
 def search_customer(customer_name: str) -> str:

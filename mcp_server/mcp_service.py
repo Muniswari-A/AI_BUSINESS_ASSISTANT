@@ -25,7 +25,7 @@ async def call_mcp_tool(
             arguments=arguments
         )
 
-        if result.isError:
+        if result.is_error:
             return "MCP tool execution failed."
 
         texts = []

@@ -4,12 +4,13 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 import ollama
 
-from backend.config import APP_NAME, APP_VERSION
+from backend.config import APP_NAME, APP_VERSION, OLLAMA_BASE_URL
 from backend.ai_service import generate_response
 from agents.langchain_agent import run_customer_agent
 from graph.business_graph import business_graph
 from fastapi.middleware.cors import CORSMiddleware
 
+ollama_client = ollama.Client(host=OLLAMA_BASE_URL)
 
 app = FastAPI(
     title=APP_NAME,
@@ -58,7 +59,7 @@ async def root():
 async def health():
     ollama_status = "unavailable"
     try:
-        ollama.list()
+        ollama_client.list()
         ollama_status = "available"
     except Exception:
         pass
@@ -76,7 +77,7 @@ async def assistant_endpoint(request: AssistantRequest):
         
     try:
         # Check if Ollama is at least reachable before starting a long workflow
-        ollama.list()
+        ollama_client.list()
     except Exception:
         raise HTTPException(status_code=503, detail="Ollama service is currently unavailable.")
 
