@@ -1,199 +1,255 @@
-# DCI AI Business Assistant
+<div align="center">
 
-An enterprise-grade, agentic AI business support platform built with **FastAPI**, **LangGraph**, **Model Context Protocol (MCP)**, **Chroma Vector DB (RAG)**, **SQLite**, and **Ollama**.
+<h1>🤖 DCI AI Business Assistant</h1>
+
+<p>
+  <strong>An enterprise-grade, agentic AI business support platform</strong><br/>
+  Built with LangGraph · MCP · RAG · FastAPI · Ollama
+</p>
+
+<p>
+  <img src="https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white"/>
+  <img src="https://img.shields.io/badge/FastAPI-0.100%2B-009688?style=for-the-badge&logo=fastapi&logoColor=white"/>
+  <img src="https://img.shields.io/badge/LangGraph-Agentic-purple?style=for-the-badge&logo=langchain&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Ollama-llama3.2-black?style=for-the-badge&logo=ollama&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white"/>
+  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge"/>
+</p>
+
+<p>
+  <img src="https://img.shields.io/badge/ChromaDB-RAG%20Pipeline-orange?style=flat-square"/>
+  <img src="https://img.shields.io/badge/MCP-Model%20Context%20Protocol-blueviolet?style=flat-square"/>
+  <img src="https://img.shields.io/badge/CrewAI-Multi--Agent-red?style=flat-square"/>
+  <img src="https://img.shields.io/badge/SQLite-Persistent%20DB-lightblue?style=flat-square"/>
+  <img src="https://img.shields.io/badge/Tests-14%20Suites-brightgreen?style=flat-square"/>
+</p>
+
+</div>
 
 ---
 
-## Project Overview
+## 📖 Overview
 
-The **DCI AI Business Assistant** processes customer requests through an intelligent multi-node workflow. It performs customer and complaint lookup via SQLite database tools running over MCP, retrieves company policies using a vector RAG pipeline, and executes ticket creation actions.
+The **DCI AI Business Assistant** is a fully agentic, multi-node AI platform that processes natural-language business requests end-to-end. It combines cutting-edge AI technologies into a single production-ready application:
 
----
-
-## Features
-
-- **Agentic Workflow Architecture**: Multi-stage state graph built using `LangGraph`.
-- **Model Context Protocol (MCP)**: Decoupled tool server (`mcp_server/server.py`) managing database queries via standard input/output interface.
-- **SQLite Database Persistence**: Stores customers, complaints, and ticket data permanently in `mcp_server/business.db`. Sequential ticket IDs (`T001`, `T002`, ...) persist seamlessly across server restarts.
-- **Retrieval-Augmented Generation (RAG)**: Policy search using `Chroma` and HuggingFace embeddings (`all-MiniLM-L6-v2`).
-- **Interactive Web Interface**: Clean frontend served directly via FastAPI at `/`.
-- **Ollama LLM Integration**: Uses local LLM inference (`llama3.2`).
+- 🔍 **Customer & complaint lookup** via a live SQLite database over MCP
+- 📚 **Policy retrieval** using a RAG pipeline (ChromaDB + HuggingFace embeddings)
+- 🎫 **Automated ticket creation** with sequential, persistent ticket IDs (`T001`, `T002`, …)
+- 🌐 **Interactive web UI** served directly from FastAPI
+- 🧠 **Local LLM inference** via Ollama — no external API keys needed
 
 ---
 
-## Architecture
+## ✨ Key Features
+
+| Feature | Technology |
+|:--------|:-----------|
+| **Agentic Workflow** | LangGraph StateGraph — 5-node pipeline |
+| **Tool Execution** | Model Context Protocol (MCP) via stdio subprocess |
+| **Policy Search** | ChromaDB + `all-MiniLM-L6-v2` HuggingFace embeddings |
+| **Multi-Agent** | CrewAI crew for complex task orchestration |
+| **LLM Backend** | Ollama (`llama3.2`) — fully local, offline-capable |
+| **REST API** | FastAPI with Pydantic validation & auto Swagger docs |
+| **Persistence** | SQLite with sequential ticket IDs that survive restarts |
+| **Containerised** | Multi-stage Dockerfile with non-root user & healthcheck |
+
+---
+
+## 🏗️ Architecture
 
 ```
-User Request
-    │
-    ▼
-FastAPI App (/api/assistant)
-    │
-    ▼
-LangGraph Workflow
-    ├── Understand Request Node (Intent & Customer extraction)
-    ├── Retrieve Information Node (MCP DB queries & RAG policy search)
-    ├── Business Analysis Node (Rule-based ticket decision logic)
-    ├── Action Node (Executes MCP create_ticket tool)
-    └── Final Response Node (Generates customer-facing message)
-    │
-    ▼
-FastAPI Response
+┌─────────────────────────────────────────────────────────────┐
+│                     User / Web Browser                      │
+└──────────────────────────┬──────────────────────────────────┘
+                           │  HTTP POST /api/assistant
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   FastAPI Gateway                           │
+│              backend/main.py  (:8000)                       │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  LangGraph Workflow                         │
+│                                                             │
+│  ┌─────────────┐   ┌──────────────┐   ┌─────────────────┐  │
+│  │  Understand │──▶│   Retrieve   │──▶│    Analysis     │  │
+│  │  Request    │   │  Information │   │ (CREATE_TICKET?) │  │
+│  └─────────────┘   └──────┬───────┘   └────────┬────────┘  │
+│                           │                    │            │
+│                    ┌──────┴──────┐    ┌────────▼────────┐  │
+│                    │  MCP Tools  │    │  Action Node    │  │
+│                    │  + RAG      │    │ (Ticket Create) │  │
+│                    └─────────────┘    └────────┬────────┘  │
+│                                               │            │
+│                                      ┌────────▼────────┐  │
+│                                      │  Final Response │  │
+│                                      │  (Ollama LLM)   │  │
+│                                      └─────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+          │                        │
+          ▼                        ▼
+┌──────────────────┐    ┌──────────────────────┐
+│   MCP Server     │    │   ChromaDB (RAG)     │
+│  mcp_server/     │    │   rag/chroma_db/     │
+│  ┌────────────┐  │    │                      │
+│  │  SQLite DB │  │    │  Policy Documents    │
+│  │ business   │  │    │  (HuggingFace        │
+│  │   .db      │  │    │   Embeddings)        │
+│  └────────────┘  │    └──────────────────────┘
+└──────────────────┘
 ```
 
 ---
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 DCI_AI_BUSINESS_ASSISTANT/
-├── backend/
-│   ├── main.py                # FastAPI gateway & endpoints
-│   ├── config.py              # Application configuration & env loading
-│   ├── ai_service.py          # Direct Ollama chat service
-│   └── langchain_service.py   # LangChain ChatOllama chain
-├── graph/
-│   ├── business_graph.py      # LangGraph state graph definition & router
-│   ├── nodes.py               # Workflow node implementations
-│   └── state.py               # BusinessState schema definition
-├── mcp_server/
-│   ├── server.py              # FastMCP server (tools for DB operations)
-│   ├── db.py                  # SQLite database connection & seeding
-│   ├── client.py              # Stdio MCP client context manager
-│   └── mcp_service.py         # Helper functions for MCP tool execution
-├── rag/
-│   ├── rag_service.py         # Document loading, vector database & retrieval
-│   └── rag_chain.py           # Standalone RAG chat chain
-├── agents/
-│   ├── business_crew.py       # CrewAI multi-agent crew runner
-│   ├── crew_agents.py         # CrewAI agent definitions
-│   ├── crew_tasks.py          # CrewAI task definitions
-│   ├── langchain_agent.py     # Tool-bound ChatOllama agent
-│   ├── customer_tools.py      # Customer tool definition
-│   └── tools.py               # Standalone customer lookup tool
-├── documents/
-│   ├── customer_support_policy.txt
-│   └── refund_policy.txt
-├── frontend/
-│   └── index.html             # Web UI interface
-├── prompts/                   # System & few-shot prompts
-├── tests/                     # Comprehensive Pytest test suite
-├── .env                       # Environment variables
-├── pytest.ini                 # Pytest configuration
-├── requirements.txt           # Project dependencies
-└── README.md                  # Comprehensive project documentation
+│
+├── 📂 backend/
+│   ├── main.py                 # FastAPI app — endpoints & CORS
+│   ├── config.py               # Environment variable loading
+│   ├── ai_service.py           # Direct Ollama chat service
+│   └── langchain_service.py    # LangChain ChatOllama chain
+│
+├── 📂 graph/
+│   ├── business_graph.py       # LangGraph StateGraph definition
+│   ├── nodes.py                # All 5 workflow node implementations
+│   └── state.py                # BusinessState TypedDict schema
+│
+├── 📂 mcp_server/
+│   ├── server.py               # FastMCP server (DB tool definitions)
+│   ├── db.py                   # SQLite setup & auto-seeding
+│   ├── client.py               # Stdio MCP client context manager
+│   └── mcp_service.py          # call_mcp_tool() helper
+│
+├── 📂 rag/
+│   ├── rag_service.py          # ChromaDB vector store & retriever
+│   └── rag_chain.py            # Standalone RAG Q&A chain
+│
+├── 📂 agents/
+│   ├── business_crew.py        # CrewAI crew runner
+│   ├── crew_agents.py          # CrewAI agent definitions
+│   ├── crew_tasks.py           # CrewAI task definitions
+│   ├── langchain_agent.py      # Tool-bound ChatOllama agent
+│   └── tools.py                # Custom LangChain tools
+│
+├── 📂 documents/               # Policy documents for RAG ingestion
+├── 📂 frontend/
+│   └── index.html              # React + Tailwind chat UI (served by FastAPI)
+│
+├── 📂 prompts/                 # System & few-shot prompt templates
+├── 📂 tests/                   # 14 pytest test suites
+│
+├── Dockerfile                  # Multi-stage production image
+├── .dockerignore
+├── .env.example                # Environment variable template
+├── requirements.txt
+└── README.md
 ```
 
 ---
 
-## Requirements
+## 🚀 Quick Start
 
-- **Python**: `3.10` or higher
-- **Ollama**: Installed and running locally (`ollama serve`)
-- **Model**: `llama3.2` pulled (`ollama pull llama3.2`)
+### Prerequisites
 
----
+| Requirement | Notes |
+|:------------|:------|
+| Python `3.10+` | [python.org](https://www.python.org/downloads/) |
+| Ollama | [ollama.com](https://ollama.com/) |
+| llama3.2 model | `ollama pull llama3.2` |
 
-## Installation & Setup
-
-### 1. Clone & Set Up Virtual Environment
+### 1️⃣ Clone the repository
 
 ```bash
-# Create virtual environment
+git clone https://github.com/<your-username>/DCI_AI_BUSINESS_ASSISTANT.git
+cd DCI_AI_BUSINESS_ASSISTANT
+```
+
+### 2️⃣ Create & activate virtual environment
+
+```bash
 python -m venv .venv
 
-# Activate virtual environment
-# Windows (PowerShell):
+# Windows (PowerShell)
 .venv\Scripts\Activate.ps1
-# Linux / macOS:
+
+# Linux / macOS
 source .venv/bin/activate
 ```
 
-### 2. Install Dependencies
+### 3️⃣ Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Setup Environment Variables
+### 4️⃣ Configure environment
 
-Create or verify `.env` in the project root:
-
-```env
-APP_NAME=DCI AI Business Assistant
-APP_VERSION=1.0.0
-OLLAMA_MODEL=llama3.2
+```bash
+cp .env.example .env
+# Defaults work out of the box for local development
 ```
 
-### 4. Ollama Setup
-
-Ensure Ollama is running and download the model:
+### 5️⃣ Start Ollama
 
 ```bash
 ollama pull llama3.2
+ollama serve
 ```
 
----
-
-## Running the Application
-
-Start the FastAPI backend with Uvicorn:
+### 6️⃣ Run the application
 
 ```bash
 uvicorn backend.main:app --host 0.0.0.0 --port 8000
 ```
 
-Access points:
-- **Web UI**: [http://localhost:8000](http://localhost:8000)
-- **API Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
-- **Health Check**: [http://localhost:8000/health](http://localhost:8000/health)
+Open your browser → **http://localhost:8000**
 
 ---
 
-## Running Tests
-
-Execute the full automated test suite:
+## 🐳 Docker Deployment
 
 ```bash
-python -m pytest tests/ -v -s
+# Build the image
+docker build -t dci-ai-assistant .
+
+# Run (Ollama must be running on the host)
+docker run -p 8000:8000 dci-ai-assistant
 ```
 
-Run specific test modules:
-
-```bash
-# Test database persistence & sequential ticket ID generation:
-python -m pytest tests/test_database_persistence.py -v -s
-
-# Test agentic workflow scenarios:
-python -m pytest tests/test_agentic_workflow.py -v -s
-```
+> **Note:** The container connects to Ollama at `http://host.docker.internal:11434` by default.
+> Override with `-e OLLAMA_BASE_URL=<your-url>`.
 
 ---
 
-## API Endpoints
+## 🌐 API Endpoints
 
 | Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/` | Serves web application UI |
-| `GET` | `/health` | Health check (app status & Ollama reachability) |
-| `POST` | `/api/assistant` | Main endpoint for business requests & agentic workflow |
-| `POST` | `/chat` | Direct conversation endpoint |
-| `POST` | `/agent` | LangChain customer lookup agent endpoint |
+|:-------|:---------|:------------|
+| `GET` | `/` | Serves the web chat UI |
+| `GET` | `/health` | App status & Ollama reachability |
+| `GET` | `/docs` | Interactive Swagger API docs |
+| `POST` | `/api/assistant` | **Main** — full agentic workflow |
+| `POST` | `/chat` | Direct Ollama chat (simple) |
+| `POST` | `/agent` | LangChain tool-bound agent |
 
-### Example Request (`POST /api/assistant`)
+### Example — Create a Support Ticket
 
-```json
-{
-  "message": "Ravi Kumar has a damaged product. Create a ticket."
-}
+**Request:**
+```bash
+curl -X POST http://localhost:8000/api/assistant \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Ravi Kumar has a damaged product. Please create a ticket."}'
 ```
 
-### Example Response
-
+**Response:**
 ```json
 {
-  "message": "Ravi Kumar has a damaged product. Create a ticket.",
-  "response": "Dear Ravi Kumar, ticket T001 has been opened for your damaged product issue.",
+  "message": "Ravi Kumar has a damaged product. Please create a ticket.",
+  "response": "Dear Ravi Kumar, I have opened ticket T001 for your damaged product issue. Our support team will contact you within 24 hours.",
   "decision": "CREATE_TICKET",
   "ticket": "Ticket T001 created successfully. Status: Open"
 }
@@ -201,28 +257,93 @@ python -m pytest tests/test_agentic_workflow.py -v -s
 
 ---
 
-## Troubleshooting & Known Warnings
+## 🧠 LangGraph Workflow — Node Details
 
-1. **Browser access to `0.0.0.0`**: On Windows, navigate to `http://localhost:8000` or `http://127.0.0.1:8000` (browsers on Windows do not resolve `0.0.0.0` directly).
-2. **Pytest Asyncio Configuration**: `pytest.ini` specifies `asyncio_mode = auto` for seamless async test execution.
-3. **Chroma Vector DB Rebuilding**: If vector DB files are moved or corrupted, `rag/rag_service.py` automatically detects and rebuilds the database safely.
+| Step | Node | Description |
+|:-----|:-----|:------------|
+| 1 | **Understand Request** | Classifies intent & extracts customer name using Ollama (JSON mode) |
+| 2 | **Retrieve Information** | Calls MCP tools for customer/complaint data; queries ChromaDB for policies |
+| 3 | **Business Analysis** | Rule-based LLM decision: `CREATE_TICKET` / `MORE_INFORMATION_REQUIRED` / `NO_ACTION` |
+| 4 | **Action** *(conditional)* | Executes `create_ticket` MCP tool; writes to SQLite with sequential IDs |
+| 5 | **Final Response** | Generates a professional customer-facing response via Ollama |
 
 ---
 
-## Production Deployment
+## 🧪 Testing
 
-For production deployments, the following architectural adjustments are recommended:
+```bash
+# Run full test suite
+python -m pytest tests/ -v -s
 
-### Local Development Requirements
-- **LLM**: Local Ollama instance (`llama3.2` model).
-- **Database**: SQLite (`mcp_server/business.db`) for lightweight local persistence.
-- **Server**: Uvicorn running on a single worker (`uvicorn backend.main:app`).
+# Run specific modules
+python -m pytest tests/test_agentic_workflow.py -v -s
+python -m pytest tests/test_database_persistence.py -v -s
+python -m pytest tests/test_mcp_graph.py -v -s
+```
 
-### Production Deployment Requirements
-- **LLM**: Use a managed/cloud LLM endpoint or a dedicated high-memory GPU instance for Ollama.
-- **Database**: Migrate from SQLite to PostgreSQL (update connection strings in `mcp_server/db.py`).
-- **Server**: Run Uvicorn behind Gunicorn or Nginx with multiple workers for concurrency:
-  ```bash
-  gunicorn -w 4 -k uvicorn.workers.UvicornWorker backend.main:app
-  ```
-- **Environment**: Secure `.env` variables (`OLLAMA_MODEL`, database credentials).
+**14 test suites** covering:
+
+- ✅ Full agentic workflow scenarios
+- ✅ MCP tool execution & client
+- ✅ Database persistence & sequential ticket IDs
+- ✅ RAG retrieval pipeline
+- ✅ FastAPI endpoint integration
+- ✅ CrewAI multi-agent orchestration
+- ✅ LangGraph state graph structure
+- ✅ LangChain tool-bound agent
+
+---
+
+## ⚙️ Configuration
+
+All settings are loaded from environment variables (see [`.env.example`](.env.example)):
+
+| Variable | Default | Description |
+|:---------|:--------|:------------|
+| `APP_NAME` | `DCI AI Business Assistant` | Application display name |
+| `APP_VERSION` | `1.0.0` | Application version |
+| `OLLAMA_MODEL` | `llama3.2` | Ollama model to use |
+| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL |
+
+---
+
+## 🔧 Troubleshooting
+
+| Issue | Fix |
+|:------|:----|
+| Browser can't reach `0.0.0.0` | Navigate to `http://localhost:8000` instead |
+| `Ollama service unavailable` | Run `ollama serve` and ensure the model is pulled |
+| ChromaDB rebuild warning | Normal on first run — vector DB is built automatically |
+| Async test errors | Ensure `pytest.ini` has `asyncio_mode = auto` (already set) |
+
+---
+
+## 🛣️ Roadmap
+
+- [ ] PostgreSQL migration for production scale
+- [ ] Streaming responses (Server-Sent Events)
+- [ ] Multi-turn conversation memory
+- [ ] Authentication & multi-tenancy
+- [ ] Cloud LLM fallback (OpenAI / Gemini)
+- [ ] Kubernetes Helm chart
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome!
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+---
+
+<div align="center">
+
+**Built with ❤️ using LangGraph · FastAPI · MCP · ChromaDB · Ollama**
+
+</div>
